@@ -10,7 +10,6 @@ def get_angle(a, b, c):
     return ang
 
 
-usePreviousLocation = False
 f = 0
 color = (0, 0, 255)
 i = 0
@@ -59,7 +58,7 @@ while True:
                 last_cnts.extend(cnts)
                 f = 0
     else:
-        if (f < 500):
+        if f < 500:
             for i in last_cnts:
                 usePreviousLocation = True
                 area = cv2.contourArea(i)
