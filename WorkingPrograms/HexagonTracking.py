@@ -14,6 +14,9 @@ def distance_calc(width):
     distance = (40 * 56) // width
     return distance
 
+def distance_from_center_to_hexagon(hexCenterX, hexCenterY, midpointX, midpointY):
+    distance1 = math.sqrt((hexCenterX - midpointX) ** 2 + (hexCenterY - midpointY) ** 2)
+    return distance1
 
 f = 0
 color = (0, 0, 255)
@@ -25,8 +28,8 @@ while True:
     _, yframe = cap.read()
     frame = cv2.cvtColor(yframe, cv2.COLOR_BGR2HSV)
     frame = cv2.resize(frame, (640, 480))
-    low_green = np.array([49, 87, 147])
-    high_green = np.array([85, 223, 255])
+    low_green = np.array([49, 87, 103])
+    high_green = np.array([85, 244, 255])
     green_mask = cv2.inRange(frame, low_green, high_green)
     green = cv2.bitwise_and(frame, frame, _, mask=green_mask)
     thresh = cv2.threshold(green, 140, 180, cv2.THRESH_BINARY)[1]
@@ -56,13 +59,14 @@ while True:
                 cv2.putText(frame, 'Hexagon Detected', (x + w2 + 10, y + h2), 0, 0.3, color)
                 cv2.circle(frame, (cX, cY), 2, color, 4)
                 print("Angle: " + str(get_angle((w1, h1), (w1, h), (cX, cY))))
+                print("Distance: ", distance_calc(w2))
+                print("HexDistance: ", distance_from_center_to_hexagon(cX, cY, w1, h1))
                 if len(last_cnts) == 1:
                     last_cnts.pop()
                 else:
                     pass
                 last_cnts.extend(cnts)
                 f = 0
-                print("Distance: ", distance_calc(w2))
     else:
         if f < 500:
             for i in last_cnts:
@@ -82,6 +86,7 @@ while True:
                     cv2.circle(frame, (cX, cY), 2, color, 4)
                     print("Angle: " + str(get_angle((w1, h1), (w1, h), (cX, cY))))
                     print("Distance: ", distance_calc(w3))
+                    print("HexDistance: ", distance_from_center_to_hexagon(cX, cY, w1, h1))
 
             f += 1
         else:
