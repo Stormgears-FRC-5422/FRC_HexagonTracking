@@ -25,8 +25,8 @@ while True:
     _, yframe = cap.read()
     frame = cv2.cvtColor(yframe, cv2.COLOR_BGR2HSV)
     frame = cv2.resize(frame, (640, 480))
-    low_green = np.array([49, 87, 147])
-    high_green = np.array([85, 223, 255])
+    low_green = np.array([47, 140, 147])
+    high_green = np.array([108, 255, 255])
     green_mask = cv2.inRange(frame, low_green, high_green)
     green = cv2.bitwise_and(frame, frame, _, mask=green_mask)
     thresh = cv2.threshold(green, 140, 180, cv2.THRESH_BINARY)[1]
@@ -62,7 +62,8 @@ while True:
                     pass
                 last_cnts.extend(cnts)
                 f = 0
-                print("Distance: ", distance_calc(w2))
+                print(distance_calc(w2))
+                # print(w2)
     else:
         if f < 500:
             for i in last_cnts:
@@ -81,8 +82,7 @@ while True:
                     cv2.putText(frame, 'Hexagon Detected', (x1 + w3 + 10, y1 + h3), 0, 0.3, color)
                     cv2.circle(frame, (cX, cY), 2, color, 4)
                     print("Angle: " + str(get_angle((w1, h1), (w1, h), (cX, cY))))
-                    print("Distance: ", distance_calc(w3))
-
+                    print(distance_calc(w3))
             f += 1
         else:
             pass
