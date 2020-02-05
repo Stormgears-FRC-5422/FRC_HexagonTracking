@@ -10,19 +10,26 @@ def get_angle(a, b, c):
     return ang
 
 
-def distance_calc(width):
-    distance = int(((40 * 56) / width) * 12)
+def distance_calc(height):
+    distance = int(((100 * 56) / height))
     return distance
+
+
+def hieght_calc(cX, w1, cY, h):
+    distance = math.sqrt(((cX - w1) ** 2) + ((cY - h) ** 2))
+    return distance
+
 
 def distance_from_center_to_hexagon(hexCenterX, hexCenterY, midpointX, midpointY):
     distance1 = math.sqrt((hexCenterX - midpointX) ** 2 + (hexCenterY - midpointY) ** 2)
     return distance1
 
+
 f = 0
 color = (0, 0, 255)
 i = 0
-# cap = cv2.VideoCapture("/dev/video0")
-cap = cv2.VideoCapture("/dev/video2")
+cap = cv2.VideoCapture("/dev/video0")
+# cap = cv2.VideoCapture("/dev/video2")
 last_cnts = []
 while True:
     _, yframe = cap.read()
@@ -59,8 +66,7 @@ while True:
                 cv2.putText(frame, 'Hexagon Detected', (x + w2 + 10, y + h2), 0, 0.3, color)
                 cv2.circle(frame, (cX, cY), 2, color, 4)
                 print("Angle: " + str(get_angle((w1, h1), (w1, h), (cX, cY))))
-                print("Distance: ", distance_calc(w2))
-                print("HexDistance: ", distance_from_center_to_hexagon(cX, cY, w1, h1))
+                print("Distance: ", distance_calc(hieght_calc(cX, w1, cY, h)))
                 if len(last_cnts) == 1:
                     last_cnts.pop()
                 else:
