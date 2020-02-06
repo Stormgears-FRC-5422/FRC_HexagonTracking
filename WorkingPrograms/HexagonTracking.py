@@ -14,15 +14,17 @@ def distance_calc(width):
     distance = int(((40 * 56) / width) * 12)
     return distance
 
+
 def distance_from_center_to_hexagon(hexCenterX, hexCenterY, midpointX, midpointY):
     distance1 = math.sqrt((hexCenterX - midpointX) ** 2 + (hexCenterY - midpointY) ** 2)
     return distance1
 
+
 f = 0
 color = (0, 0, 255)
 i = 0
-# cap = cv2.VideoCapture("/dev/video0")
-cap = cv2.VideoCapture("/dev/video2")
+cap = cv2.VideoCapture("/dev/video0")
+# cap = cv2.VideoCapture("/dev/video2")
 last_cnts = []
 while True:
     _, yframe = cap.read()

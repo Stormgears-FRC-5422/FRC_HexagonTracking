@@ -10,14 +10,15 @@ def get_angle(a, b, c):
     return ang
 
 
-def distance_calc(height):
-    distance = int(((100 * 56) / height))
+def distance_calc(height, magic):
+    distance = int(((magic * 56) / height))
     return distance
 
 
-def height_calc(cX, w1, cY, h):
-    distance = math.sqrt(((cX - w1) ** 2) + ((cY - h) ** 2))
+def height_calc(centerX, w1, centerY, h):
+    distance = math.sqrt(((centerX - w1) ** 2) + ((centerY - h) ** 2))
     return distance
+
 
 f = 0
 color = (0, 0, 255)
@@ -25,7 +26,7 @@ i = 0
 cap = cv2.VideoCapture("/dev/video0")
 # cap = cv2.VideoCapture("/dev/video2")
 last_cnts = []
-heightCounter = 0
+calibrateCounter = True
 while True:
     _, yframe = cap.read()
     frame = cv2.cvtColor(yframe, cv2.COLOR_BGR2HSV)
@@ -40,7 +41,11 @@ while True:
     cnts = imutils.grab_contours(cnts)
     threshold_area = 10
     (h, w) = frame.shape[:2]
+    if calibrateCounter:
+        calibrateH = h
     w1 = w // 2
+    if calibrateCounter:
+        calibrateW = w1
     h1 = h // 2
     cv2.circle(frame, (w1, h1), 2, color, 4)
     cv2.circle(frame, (w1, h), 2, color, 4)
@@ -57,11 +62,18 @@ while True:
                 M = cv2.moments(cnt)
                 cX = int(M["m10"] / M["m00"])
                 cY = int(M["m01"] / M["m00"])
+                if calibrateCounter:
+                    calibrateCx = cX
+                if calibrateCounter:
+                    calibrateCy = cY
+                if calibrateCounter:
+                    magic = (height_calc(calibrateCx, calibrateW, calibrateCy, calibrateH) * 20) / 56
+                    calibrateCounter = False
                 cv2.rectangle(frame, (x, y), (x + w2, y + h2), color, 2)
                 cv2.putText(frame, 'Hexagon Detected', (x + w2 + 10, y + h2), 0, 0.3, color)
                 cv2.circle(frame, (cX, cY), 2, color, 4)
                 print("Angle: " + str(get_angle((w1, h1), (w1, h), (cX, cY))))
-                print("Distance: ", distance_calc(height_calc(cX, w1, cY, h)))
+                print("Distance: ", distance_calc(height_calc(cX, w1, cY, h), magic))
                 if len(last_cnts) == 1:
                     last_cnts.pop()
                 else:
