@@ -10,23 +10,22 @@ def get_angle(a, b, c):
     return ang
 
 
-def distance_calc(height, magic):
-    distance = int(((magic * 56) / height) * 12)
+def distance_calc(width):
+    distance = int(((40 * 56) / width) * 12)
     return distance
 
 
-def height_calc(centerX, w1, centerY, h):
-    distance = math.sqrt(((centerX - w1) ** 2) + ((centerY - h) ** 2))
-    return distance
+def distance_from_center_to_hexagon(hexCenterX, hexCenterY, midpointX, midpointY):
+    distance1 = math.sqrt((hexCenterX - midpointX) ** 2 + (hexCenterY - midpointY) ** 2)
+    return distance1
 
 
 f = 0
 color = (0, 0, 255)
 i = 0
-cap = cv2.VideoCapture("/dev/video2")
+cap = cv2.VideoCapture("/dev/video0")
 # cap = cv2.VideoCapture("/dev/video2")
 last_cnts = []
-calibrateCounter = True
 while True:
     _, yframe = cap.read()
     frame = cv2.cvtColor(yframe, cv2.COLOR_BGR2HSV)
@@ -39,14 +38,9 @@ while True:
     gray = cv2.cvtColor(thresh, cv2.COLOR_BGR2GRAY)
     cnts = cv2.findContours(gray.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
-    min_threshold_area = 10
-    max_threshold_area = 3500
+    threshold_area = 10
     (h, w) = frame.shape[:2]
-
     w1 = w // 2
-    if calibrateCounter:
-        calibrateW = w1
-        calibrateH = h
     h1 = h // 2
     cv2.circle(frame, (w1, h1), 2, color, 4)
     cv2.circle(frame, (w1, h), 2, color, 4)
@@ -54,8 +48,7 @@ while True:
         print("CONTOURS: ", len(cnts))
         for cnt in cnts:
             area = cv2.contourArea(cnt)
-            print("Countour Area: ", area)
-            if max_threshold_area > area > min_threshold_area:
+            if area > threshold_area:
                 cv2.drawContours(frame, cnts, -1, color, 2)
                 rect = cv2.boundingRect(cnt)
                 cv2.contourArea(cnt)
@@ -64,18 +57,13 @@ while True:
                 M = cv2.moments(cnt)
                 cX = int(M["m10"] / M["m00"])
                 cY = int(M["m01"] / M["m00"])
-                if calibrateCounter:
-                    calibrateCx = cX
-                    calibrateCy = cY
-                    magic = (height_calc(calibrateCx, calibrateW, calibrateCy, calibrateH) * 20) / 56
-                    print("Magic: ", magic)
-                    calibrateCounter = False
                 cv2.rectangle(frame, (x, y), (x + w2, y + h2), color, 2)
                 cv2.putText(frame, 'Hexagon Detected', (x + w2 + 10, y + h2), 0, 0.3, color)
                 cv2.circle(frame, (cX, cY), 2, color, 4)
                 print("Angle: " + str(get_angle((w1, h1), (w1, h), (cX, cY))))
-                print("Distance: ", distance_calc(height_calc(cX, w1, cY, h), magic))
-                print("Height: ", height_calc(cX, w1, cY, h))
+                # print("Distance: ", distance_calc(w2))
+                # print("HexDistance: ", distance_from_center_to_hexagon(cX, cY, w1, h1))
+                print("Distance: ", int(960 / h2))
                 if len(last_cnts) == 1:
                     last_cnts.pop()
                 else:
@@ -87,7 +75,7 @@ while True:
             for i in last_cnts:
                 usePreviousLocation = True
                 area = cv2.contourArea(i)
-                if max_threshold_area > area > min_threshold_area:
+                if area > threshold_area:
                     cv2.drawContours(frame, last_cnts, -1, color, 2)
                     rect1 = cv2.boundingRect(i)
                     cv2.contourArea(i)
@@ -100,7 +88,8 @@ while True:
                     cv2.putText(frame, 'Hexagon Detected', (x1 + w3 + 10, y1 + h3), 0, 0.3, color)
                     cv2.circle(frame, (cX, cY), 2, color, 4)
                     print("Angle: " + str(get_angle((w1, h1), (w1, h), (cX, cY))))
-                    print("Distance: ", distance_calc(height_calc(cX, w1, cY, h), magic))
+                    print("Distance: ", distance_calc(w3))
+                    # print("HexDistance: ", distance_from_center_to_hexagon(cX, cY, w1, h1))
 
             f += 1
         else:

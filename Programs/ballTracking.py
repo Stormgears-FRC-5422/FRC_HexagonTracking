@@ -23,7 +23,7 @@ def height_calc(centerX, w1, centerY, h):
 f = 0
 color = (0, 0, 255)
 i = 0
-cap = cv2.VideoCapture("/dev/video2")
+cap = cv2.VideoCapture("/dev/video0")
 # cap = cv2.VideoCapture("/dev/video2")
 last_cnts = []
 calibrateCounter = True
@@ -31,8 +31,8 @@ while True:
     _, yframe = cap.read()
     frame = cv2.cvtColor(yframe, cv2.COLOR_BGR2HSV)
     frame = cv2.resize(frame, (640, 480))
-    low_green = np.array([49, 87, 103])
-    high_green = np.array([85, 244, 255])
+    low_green = np.array([0, 195, 0])
+    high_green = np.array([40, 255, 255])
     green_mask = cv2.inRange(frame, low_green, high_green)
     green = cv2.bitwise_and(frame, frame, _, mask=green_mask)
     thresh = cv2.threshold(green, 140, 180, cv2.THRESH_BINARY)[1]
@@ -55,7 +55,7 @@ while True:
         for cnt in cnts:
             area = cv2.contourArea(cnt)
             print("Countour Area: ", area)
-            if max_threshold_area > area > min_threshold_area:
+            if area > min_threshold_area:
                 cv2.drawContours(frame, cnts, -1, color, 2)
                 rect = cv2.boundingRect(cnt)
                 cv2.contourArea(cnt)
@@ -74,7 +74,9 @@ while True:
                 cv2.putText(frame, 'Hexagon Detected', (x + w2 + 10, y + h2), 0, 0.3, color)
                 cv2.circle(frame, (cX, cY), 2, color, 4)
                 print("Angle: " + str(get_angle((w1, h1), (w1, h), (cX, cY))))
-                print("Distance: ", distance_calc(height_calc(cX, w1, cY, h), magic))
+                # print("Distance: ", distance_calc(height_calc(cX, w1, cY, h), magic))
+                print("Distance Surya: ", (height_calc(cX, w1, cY, h) ** 2) * 0.0007763683 - (
+                            0.6344597 * height_calc(cX, w1, cY, h)) + 139.5395)
                 print("Height: ", height_calc(cX, w1, cY, h))
                 if len(last_cnts) == 1:
                     last_cnts.pop()
@@ -87,7 +89,7 @@ while True:
             for i in last_cnts:
                 usePreviousLocation = True
                 area = cv2.contourArea(i)
-                if max_threshold_area > area > min_threshold_area:
+                if area > min_threshold_area:
                     cv2.drawContours(frame, last_cnts, -1, color, 2)
                     rect1 = cv2.boundingRect(i)
                     cv2.contourArea(i)

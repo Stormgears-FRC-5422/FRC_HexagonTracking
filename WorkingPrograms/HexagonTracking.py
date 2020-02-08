@@ -63,6 +63,8 @@ while True:
                 print("Angle: " + str(get_angle((w1, h1), (w1, h), (cX, cY))))
                 print("Distance: ", distance_calc(w2))
                 print("HexDistance: ", distance_from_center_to_hexagon(cX, cY, w1, h1))
+                print("Width: ", w2)
+                print("Height: ", h2)
                 if len(last_cnts) == 1:
                     last_cnts.pop()
                 else:
