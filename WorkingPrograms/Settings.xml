@@ -1,0 +1,10 @@
+<data>
+    <items>
+        <item name="Minimum Threshold Area">10</item>
+        <item name="Maximum Threshold Area">5000</item>
+        <item name="Color of the Contour">(0, 0, 250)</item>
+        <item name="Size of the Frame">(640, 480)</item>
+        <item name="Low Green Range">[39, 69, 149]</item>
+        <item name="High Green Range">[99, 255, 255]</item>
+    </items>
+</data>

@@ -1,8 +1,27 @@
 import math
+import xml.etree.ElementTree as ET
+from ast import literal_eval as make_tuple
 
 import cv2
 import imutils
 import numpy as np
+
+tree = ET.parse('Settings.xml')
+root = tree.getroot()
+
+min_threshold_area = int(root[0][0].text)
+max_threshold_area = int(root[0][1].text)
+color = make_tuple(root[0][2].text)
+frameSize = make_tuple(root[0][3].text)
+lowGreenRange = make_tuple(root[0][4].text)
+highGreenRange = make_tuple(root[0][5].text)
+
+cap = cv2.VideoCapture("/dev/video0")
+
+last_cnts = []
+returnArray = []
+i = 0
+OldContourCounter = 0
 
 
 def get_angle(a, b, c):
@@ -10,78 +29,75 @@ def get_angle(a, b, c):
     return ang
 
 
-f = 0
-color = (0, 0, 255)
-i = 0
-cap = cv2.VideoCapture("/dev/video0")
-# cap = cv2.VideoCapture("/dev/video2")
-last_cnts = []
-while True:
+def initFrame():
     _, yframe = cap.read()
     frame = cv2.cvtColor(yframe, cv2.COLOR_BGR2HSV)
-    frame = cv2.resize(frame, (640, 480))
-    low_green = np.array([49, 87, 103])
-    high_green = np.array([85, 244, 255])
+    frame = cv2.resize(frame, frameSize)
+    low_green = np.array(lowGreenRange)
+    high_green = np.array(highGreenRange)
     green_mask = cv2.inRange(frame, low_green, high_green)
     green = cv2.bitwise_and(frame, frame, _, mask=green_mask)
     thresh = cv2.threshold(green, 140, 180, cv2.THRESH_BINARY)[1]
     gray = cv2.cvtColor(thresh, cv2.COLOR_BGR2GRAY)
     cnts = cv2.findContours(gray.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
-    threshold_area = 10
     (h, w) = frame.shape[:2]
     w1 = w // 2
     h1 = h // 2
-    cv2.circle(frame, (w1, h1), 2, color, 4)
-    cv2.circle(frame, (w1, h), 2, color, 4)
-    if len(cnts) == 1:
-        print("CONTOURS: ", len(cnts))
-        for cnt in cnts:
-            area = cv2.contourArea(cnt)
-            if area > threshold_area:
-                cv2.drawContours(frame, cnts, -1, color, 2)
-                rect = cv2.minAreaRect(cnt)
-                cv2.contourArea(cnt)
-                assert isinstance(rect, object)
-                (x, y), (w2, h2), angle = rect
-                M = cv2.moments(cnt)
-                cX = int(M["m10"] / M["m00"])
-                cY = int(M["m01"] / M["m00"])
-                box = cv2.boxPoints(rect)
-                box = np.int0(box)
-                rect2 = cv2.drawContours(frame.copy(), [box], 0, color, 3)
-                cv2.circle(frame, (cX, cY), 2, color, 4)
-                print("Angle: " + str(get_angle((w1, h1), (w1, h), (cX, cY))))
-                print("Distance: ", int(960 / h2))
+    cv2.circle(yframe, (w1, h1), 2, color, 4)
+    cv2.circle(yframe, (w1, h), 2, color, 4)
+    returnArray.clear()
+    returnArray.append(cnts)
+    returnArray.append(frame)
+    returnArray.append(yframe)
+
+
+def analyzeFrame(usePreviousCnt, OldPositionCounter):
+    if not usePreviousCnt:
+        current = returnArray[0]
+    else:
+        current = last_cnts
+    for cnt in current:
+        area = cv2.contourArea(cnt)
+        if min_threshold_area < area < max_threshold_area:
+            cv2.drawContours(returnArray[2], current, -1, color, 2)
+            rect = cv2.minAreaRect(cnt)
+            cv2.contourArea(cnt)
+            assert isinstance(rect, object)
+            (x, y), (h2, w2), angle = rect
+            M = cv2.moments(cnt)
+            cX = int(M["m10"] / M["m00"])
+            cY = int(M["m01"] / M["m00"])
+            box = cv2.boxPoints(rect)
+            box = np.int0(box)
+            cv2.drawContours(returnArray[2], [box], 0, color, 3)
+            cv2.circle(returnArray[2], (cX, cY), 2, color, 4)
+            print("Angle of the Hexagon: ", int(angle))
+            if angle <= 1 or angle <= -1:
+                print("Distance: ", int(960 / w2 * 12))
+            else:
+                print("Distance: ", int(960 / h2 * 12))
+            if usePreviousCnt == False:
                 if len(last_cnts) == 1:
                     last_cnts.pop()
                 else:
                     pass
-                last_cnts.extend(cnts)
-                f = 0
+                last_cnts.extend(returnArray[0])
+                OldPositionCounter = 0
+            else:
+                OldPositionCounter += 1
+
+
+while True:
+    initFrame()
+    if len(returnArray[0]) == 1:
+        analyzeFrame(usePreviousCnt=False, OldPositionCounter=OldContourCounter)
     else:
-        if f < 500:
-            for i in last_cnts:
-                usePreviousLocation = True
-                area = cv2.contourArea(i)
-                if area > threshold_area:
-                    cv2.drawContours(frame, last_cnts, -1, color, 2)
-                    rect1 = cv2.minAreaRect(i)
-                    cv2.contourArea(i)
-                    assert isinstance(rect1, object)
-                    (x1, y1), (w3, h3), angle = rect1
-                    M = cv2.moments(i)
-                    box = cv2.boxPoints(rect1)
-                    box = np.int0(box)
-                    cX = int(M["m10"] / M["m00"])
-                    cY = int(M["m01"] / M["m00"])
-                    cv2.circle(frame, (cX, cY), 2, color, 4)
-                    print("Angle: " + str(get_angle((w1, h1), (w1, h), (cX, cY))))
-                    print("Distance: ", int(960 / h3))
-            f += 1
+        if OldContourCounter < 500:
+            analyzeFrame(usePreviousCnt=True, OldPositionCounter=OldContourCounter)
         else:
             pass
-    cv2.imshow("Frame", frame)
+    cv2.imshow("Frame", returnArray[2])
     key = cv2.waitKey(1)
     if key == 27:
         break
